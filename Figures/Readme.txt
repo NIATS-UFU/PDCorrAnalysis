@@ -1,0 +1,1 @@
+This folder contains a set of figures that are automatically generates by the programs.
