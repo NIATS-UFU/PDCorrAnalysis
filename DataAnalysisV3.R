@@ -152,15 +152,6 @@ pdf("./Figures/Figure5.pdf", width = 5, height = 10) #saving in pdf
 print(g1)
 dev.off() #fechar o arquivo
 
-
-
-
-
-
-
-
-
-
 # Figure 6 ----------------------------------------------------------------
 
 # Figure 6. Box plot, showing the median, minimum, maximum, first quartile, third quartile, 
