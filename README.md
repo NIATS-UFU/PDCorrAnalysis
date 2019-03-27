@@ -1,2 +1,4 @@
 # PDCorrAnalysis
-Set of tools for feature extraction, correlation analysis and data modelling from people with Parkinson's disease
+#         Accompanying code of the manuscript 
+#        "Task-specific Tremor Quantification in a Clinical Setting for Parkinson’s 
+#         Disease Using Wearable Inertial Sensors"
