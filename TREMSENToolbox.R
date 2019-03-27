@@ -1,66 +1,53 @@
-# TREMSEN toolbox  -------------------------------------------------------------------
-# Version: 1.0
-# Author: Prof. Adriano de Oliveira Andrade - adriano@ufu.br
-# Date: 11 November 2018
+# -------------------------------- TREMSEN toolbox  ----------------------------------
+# Version: 2.0
+# Date: March 6, 2019
+# Latest version available @ https://github.com/NIATS-UFU/TREMSEN-Toolbox.git
+
+# Author: Prof. Adriano de Oliveira Andrade
+# Contact email: adriano@ufu.br
+# CV LATTES: http://lattes.cnpq.br/1229329519982110
+# ORCID ID: http://orcid.org/0000-0002-5689-6606
+# Researcher ID: http://www.researcherid.com/rid/D-9721-2012 
+# GOOGLE ACADEMIC: https://scholar.google.com.br/citations?user=8nHKQHMAAAAJ&hl=pt-BR
+
+
+# Adddress: Centre for Innovation and Technology Assessment in Health, 
+#           Postgraduate Program in Electrical and Biomedical Engineering, 
+#           Faculty of Electrical Engineering, Federal University of Uberlândia, 
+#           Uberlândia, Brazil
+# Webpage:  http://www.niats.feelt.ufu.br/
+
 # Description: toolbox for processing data collected with the device TREMSEN
-if (!require(readxl)) install.packages('readxl')
-if (!require(mvnormtest)) install.packages('mvnormtest')
-if (!require(ggplot2)) install.packages('ggplot2')
-if (!require(Hmisc)) install.packages('Hmisc')
-if (!require(leaps)) install.packages('leaps')
-if (!require(beanplot)) install.packages('beanplot')
-if (!require(moments)) install.packages('moments')
-if (!require(fBasics)) install.packages('fBasics')
-if (!require(lawstat)) install.packages('lawstat')
-if (!require(plotly)) install.packages('plotly')
-if (!require(robust)) install.packages('robust')
-if (!require(mclust)) install.packages('mclust')
-if (!require(plyr)) install.packages('plyr')
-if (!require(tsne)) install.packages('tsne')
-if (!require(boot)) install.packages('boot')
-if (!require(reshape2)) install.packages('reshape2')
-if (!require(pracma)) install.packages('pracma')
-if (!require(seewave)) install.packages('seewave')
-if (!require(psd)) install.packages('psd')
-if (!require(rlist)) install.packages('rlist')
-if (!require(ggpubr)) install.packages('ggpubr')
-if (!require(gridExtra)) install.packages('gridExtra')
-if (!require(grid)) install.packages('grid')
-if (!require(outliers)) install.packages('outliers')
-if (!require(EMD)) install.packages('EMD')
-if (!require(openxlsx)) install.packages('openxlsx')
-if (!require(dygraphs)) install.packages('dygraphs')
-if (!require(htmltools)) install.packages('htmltools')
+# ------------------------------------------------------------------------------------
+
+# Install and load R packages
+installAndLoadPackages <- function(requiredPackages)
+{
+  remainingPackages <- requiredPackages[!(requiredPackages %in% installed.packages()[,"Package"])];
+  
+  if(length(remainingPackages)) 
+  {
+    install.packages(remainingPackages);
+  }
+  for(packageName in requiredPackages)
+  {
+    library(packageName, character.only=TRUE, quietly=TRUE);
+  }
+}
+
+# List of required packages
+requiredPackages = c('readxl','mvnormtest', 'ggplot2','Hmisc',
+'leaps','beanplot', 'moments', 'fBasics','lawstat','plotly',
+   'robust','mclust', 'plyr','tsne', 'boot', 'reshape2',
+ 'pracma', 'seewave', 'psd', 'rlist', 'ggpubr', 'gridExtra', 
+'grid', 'outliers', 'EMD','openxlsx',  'dygraphs','htmltools', 'tibble')
+
+# Load and install packages if necessary
+installAndLoadPackages(requiredPackages)
 
 
-library(readxl) #carregar biblioteca de leitura de planilha Excel
-library(mvnormtest) #Teste de normalidade
-library(ggplot2)
-library(Hmisc)
-library(leaps)
-library(beanplot)
-library(moments)
-library(fBasics)
-library(lawstat)
-library(plotly)
-library(robust)
-library(mclust) #citation("mclust")
-library(plyr)
-library(tsne)
-library(boot)
-library(reshape2)
-library(pracma)
-library(seewave)
-library(psd)
-library(rlist)
-library(ggpubr)
-library(gridExtra)
-library(grid)
-library(outliers)
-library (EMD)
-library(openxlsx)
-library(dygraphs)
-library(htmltools)
+# Visualizacao de packages instalados
+# search()
 
 
 # LoadTREMSENFile ---------------------------------------------------------
@@ -77,7 +64,7 @@ library(htmltools)
 #       df <- LoadTREMSENFile(testFilename)
 
 LoadTREMSENFile <- function(Filename) {
-  ## Carregamento de arquivo do TREMSEN
+  # Carregamento de arquivo do TREMSEN
   df = read.table(
     Filename,
     skip = 1,
@@ -86,19 +73,19 @@ LoadTREMSENFile <- function(Filename) {
     row.names = NULL,
     allowEscapes = TRUE
   )
-  colnames(df) <-
-    colnames(df)[2:ncol(df)] # foi necessÃ¡rio remover uma coluna pois o R nÃƒÂ£o interpretou um caracter do arquivo original
+  
+  # foi necessário remover uma coluna pois o R não interpretou um caracter do arquivo original
+  colnames(df) <- colnames(df)[2:ncol(df)] 
   df <- df[1:ncol(df) - 1]
   df[[1]] = as.numeric(df[[1]])
   
   
-  # incluindo coluna que combina a resposta binÃ¡ria dos pulsos A e B
-  
+  # incluindo coluna que combina a resposta binária dos pulsos A e B
   X.PULSE <- combinePulseAB(df$X.PULSE.A., df$X.PULSE.B.)
-  X.PULSE<-movavg(X.PULSE, n=10,type='m')
+  X.PULSE <- movavg(X.PULSE, n=10, type='m')
   
-  indx1 <- which(X.PULSE>=0.5)
-  indx2 <- which(X.PULSE<0.5)
+  indx1 <- which(X.PULSE >= 0.5)
+  indx2 <- which(X.PULSE < 0.5)
   X.PULSE[indx1] <- 1
   X.PULSE[indx2] <- 0
   
@@ -111,15 +98,12 @@ LoadTREMSENFile <- function(Filename) {
   for (i in 1:length(X.PULSE)) {
     if (X.PULSE[i] == 1) {
       FLAG <- TRUE
-      #wnd[i] <- c(paste("W", j, "-", i, sep = ""))
-      wnd[i] <- as.numeric (c(paste(j, sep = "")))
-      # wnd[i] <- j
+      wnd[i] <- as.numeric(c(paste(j, sep = "")))
     }
     else
     {
       if (FLAG == TRUE) {
         j <- j + 1
-       
       }
       
       FLAG = FALSE
@@ -135,8 +119,10 @@ LoadTREMSENFile <- function(Filename) {
 }
 
 # combinePulseAB ---------------------------------------------------------
-# Combination of pulses A and B generated by TREMSEN. The combination is based on the application of the function
-# OR to the input pulses A and B
+#   Combination of pulses A and B generated by TREMSEN. 
+#   The combination is based on the application of the function
+#   OR to the input pulses A and B
+# 
 # Input: 
 #       PulseA: pulse A recorded in the data file of TREMSEN
 #       PulseB: pulse B recorded in the data file of TREMSEN
@@ -149,14 +135,14 @@ LoadTREMSENFile <- function(Filename) {
 
 combinePulseAB <- function(PulseA, PulseB) {
   th <- 2
-  
+
   ppA <- vector(length = length(PulseA))
   ppB <- vector(length = length(PulseB))
   
-  ppA[which(PulseA< th)]  <- 0
+  ppA[which(PulseA < th)] <- 0
   ppA[which(PulseA > th)] <- 1
   
-  ppB[which(PulseB> th)]  <- 0
+  ppB[which(PulseB > th)] <- 0
   ppB[which(PulseB < th)] <- 1
   
   pp <- as.numeric(ppA | ppB)
@@ -165,8 +151,9 @@ combinePulseAB <- function(PulseA, PulseB) {
 }
 
 # detrendTremsenData ---------------------------------------------------------
-# Linear detrend. The function uses the function detrend available in the Package 'pracma' 
-# (Practical Numerical Math Functions) for removing piecewise linear trends of the data
+#   Linear detrend. The function uses the function detrend available in the Package 'pracma' 
+#   (Practical Numerical Math Functions) for removing piecewise linear trends of the data
+# 
 # Input: 
 #       df: dataframe resulting from LoadTREMSENFile
 # Output:
@@ -176,10 +163,10 @@ combinePulseAB <- function(PulseA, PulseB) {
 #
 #       df.detrended <- detrendTremsenData(df)
 
-detrendTremsenData <- function(df){
+detrendTremsenData <- function(df, startColRange=2, endColRange=39){
   
   X <- data.matrix(df)
-  dX <- detrend(X[,c(2:39)], 'linear')
+  dX <- detrend(X[, c(startColRange:endColRange)], 'linear')
   
   res <- (as.data.frame(dX))
   ss <- cbind(df["X.Time."], res)
@@ -189,11 +176,12 @@ detrendTremsenData <- function(df){
 }
 
 # nonLineardetrendTremsenData ---------------------------------------------------------
-#               Nonlinear detrend. The function removes nonlinear trends from the data. 
-#             The data are first smoothed (see Tukey's smoothers, in  the package stats, function smooth) 
-#             and then the resulting signal is subtracted from a nonlinear trend.
-#               The nonlinear trend is estimated by Local Polynomial Regression Fitting (see function loess)
-#             in the package stats. The resulting signal is also linearly detrended.
+#   Nonlinear detrend. The function removes nonlinear trends from the data. 
+#   The data are first smoothed (see Tukey's smoothers, in  the package stats, function smooth) 
+#   and then the resulting signal is subtracted from a nonlinear trend.
+#   The nonlinear trend is estimated by Local Polynomial Regression Fitting (see function loess)
+#   in the package stats. The resulting signal is also linearly detrended.
+#
 # Input: 
 #       df: dataframe resulting from LoadTREMSENFile
 # Output:
@@ -203,21 +191,22 @@ detrendTremsenData <- function(df){
 #
 #       df.nonlineardetrended <- nonLineardetrendTremsenData(df)
 
-nonLineardetrendTremsenData <- function(df){
+nonLineardetrendTremsenData <- function(df, startColRange=2, endColRange=39) {
   
   df.smoothed <- smoothTremsenData(df)
-  df.loess <-loessTremsenData(df.smoothed)
-
-  res <- df
-  res[2:39] <- df.smoothed[2:39] - df.loess[2:39]
+  df.loess <- loessTremsenData(df.smoothed)
   
-  res[2:39] <- detrend(as.matrix(res[2:39]), 'linear')
+  res <- df
+  res[startColRange:endColRange] <- df.smoothed[startColRange:endColRange] - df.loess[startColRange:endColRange]
+  res[startColRange:endColRange] <- detrend(as.matrix(res[startColRange:endColRange]), 'linear')
   
   return(res)
 }
 
 # smoothTremsenData ---------------------------------------------------------
-#             Smooth data based on the Tukey's (Running Median) Smoothing (see the package smooth in the package stats)
+#   Smooth data based on the Tukey's (Running Median) Smoothing (see the package 
+#   smooth in the package stats)
+# 
 # Input: 
 #       df: dataframe resulting from LoadTREMSENFile
 # Output:
@@ -227,12 +216,12 @@ nonLineardetrendTremsenData <- function(df){
 #
 #       df.smoothed <- smoothTremsenData(df)
 
-smoothTremsenData <- function(df){
+smoothTremsenData <- function(df, startColRange=2, endColRange=39) {
   
   X <- data.matrix(df)
   
-  dx <- apply(X[,c(2:39)], 2, smooth,kind="3RS3R", twiceit = TRUE)
-
+  dx <- apply(X[,c(startColRange:endColRange)], 2, smooth,kind="3RS3R", twiceit = TRUE)
+  
   res <- (as.data.frame(dx))
   ss <- cbind(df["X.Time."], res)
   ss <- cbind(ss, df[c("X.PULSE.A.","X.PULSE.B.","X.PULSE")])
@@ -241,7 +230,7 @@ smoothTremsenData <- function(df){
 }
 
 # loessTremsenData ---------------------------------------------------------
-#             Estimate nonlinear trend
+#       Estimate nonlinear trend
 # Input: 
 #       df: dataframe resulting from LoadTREMSENFile
 # Output:
@@ -251,7 +240,7 @@ smoothTremsenData <- function(df){
 #
 #       df.nonlineardetrended <- nonLineardetrendTremsenData(df)
 
-loessTremsenData <- function(df) {
+loessTremsenData <- function(df, startColRange=2, endColRange=39) {
   
   X <- data.matrix(df)
   
@@ -261,8 +250,7 @@ loessTremsenData <- function(df) {
     return(yp)
   }
   
-  
-  dx <- apply(X[,c(2:39)], 2, loessData,t=X[,c(1)])
+  dx <- apply(X[,c(startColRange:endColRange)], 2, loessData, t = X[,c(1)])
   
   res <- (as.data.frame(dx))
   ss <- cbind(df["X.Time."], res)
@@ -272,7 +260,7 @@ loessTremsenData <- function(df) {
 }
 
 # windowTremsenData ---------------------------------------------------------
-#             Apply a rectangular window to the input signal. The input signal is multiplied by PULSE (0=LOW and 1=HIGH)
+#       Apply a rectangular window to the input signal. The input signal is multiplied by PULSE (0=LOW and 1=HIGH)
 # Input: 
 #       df: dataframe resulting from LoadTREMSENFile
 # Output:
@@ -282,12 +270,14 @@ loessTremsenData <- function(df) {
 #
 #       df.windowed <- windowTremsenData(df)
 
-windowTremsenData<- function(df){
+windowTremsenData <- function(df, startColRange=2, endColRange=39) {
   
-  M <- apply(df[,c(2:39)], 2, 
-             wnd <- function(x,y) {return(x*y)}, y=df$X.PULSE)
+  M <- apply(df[,c(startColRange:endColRange)], 2, 
+             wnd <- function(x,y) { return(x*y) }, 
+             y = df$X.PULSE)
+  
   dxx <- df
-  dxx[,c(2:39)] <- M
+  dxx[,c(startColRange:endColRange)] <- M
   return(dxx)
 }
 
@@ -303,22 +293,21 @@ windowTremsenData<- function(df){
 #
 #       pp <- psdTremsenData(df.nonlineardetrended) 
 
-psdTremsenData <- function(df){
+psdTremsenData <- function(df, startColRange=2, endColRange=39) {
   
-  
-  psf <- function(vec,fs){
+  psf <- function(vec, fs) {
     
-    sss <- pspectrum(vec, verbose = FALSE, 
-                     niter=10, AR=TRUE, x.frqsamp=fs, plot=FALSE) ##library(psd)
+    # library(psd)
+    sss <- pspectrum(vec, verbose = FALSE, niter = 10, 
+                     AR = TRUE, x.frqsamp = fs, plot = FALSE) 
     
-    return(data.frame("freq" = sss$freq, "spec" = sss$spec))
-
+    return (data.frame("freq" = sss$freq, "spec" = sss$spec))
   }
   
   
   X <- data.matrix(df)
   
-  fs <- 1/ (df$X.Time.[2]-df$X.Time.[1])
+  fs <- 1 / (df$X.Time.[2] - df$X.Time.[1])
   
   Nwindows <- nlevels(df$X.PULSE.LABEL)-1
   
@@ -327,8 +316,8 @@ psdTremsenData <- function(df){
   for (i in 1:Nwindows){
     
     indx <- which(df$X.PULSE.LABEL==i)
-    dx[[i]] <- apply(X[indx,c(2:39)], 2, psf, fs=fs)
     
+    dx[[i]] <- apply(X[indx, c(startColRange:endColRange)], 2, psf, fs=fs)
   }
   
   return(dx)
@@ -338,7 +327,7 @@ psdTremsenData <- function(df){
 #             Estimate features from the input data
 # Input: 
 #       df: dataframe resulting from LoadTREMSENFile
-#       w: length of the window, from wich features are estimated
+#       w: length of the window, from which features are estimated
 #       s: spot step. Windows of length w are positioned on each spot, starting from 1, being then incremented by s, 
 #          to the last spot, which should be less or equal to (total - ww), where total is the number of samples of
 #          the time-series
@@ -350,21 +339,16 @@ psdTremsenData <- function(df){
 #
 #       df.featTremsenData <- featExtractFromTremenDataSet(df.nonlineardetrended,w=50,s=10, method = "rms")
 
-featExtractFromTremenDataSet <- function(df,w,s, method="rms") {
+featExtractFromTremenDataSet <- function(df, w, s, method="rms", startColRange=2, endColRange=39) {
   
   methods <- c("rms", "mav", "peak", "mavfd", "mavfdn","mavsd", "mavsdn")
   
   meth <- pmatch(method, methods)
   
-  
-  
   if (is.na(meth)) 
     stop("invalid feature extraction method")
   else
     selectedMethod <- methods[meth]
-  
-  
-  
   
   slideFunct <- function(data, ww, ss) {
     total <- length(data)
@@ -372,52 +356,54 @@ featExtractFromTremenDataSet <- function(df,w,s, method="rms") {
                  to = (total - ww),
                  by = ss)
     result <- vector(length = length(spots))
+    
     for (i in 1:length(spots)) {
       
-      if (selectedMethod=="rms")
+      # Estima a raíz do valor médio quadrado
+      if (selectedMethod == "rms")
         result[i] <- sqrt(mean(data[spots[i]:(spots[i] + ww-1)]^2))
       
-      if (selectedMethod=="mav")
+      # Estima o valor absoluto médio de um vetor.
+      if (selectedMethod == "mav")
         result[i] <- sum(abs(data[spots[i]:(spots[i] + ww-1)]))/ww
       
-      if (selectedMethod=="peak")
+      # Estima o valor máximo de um vetor, considera somente valores positivos da janela
+      if (selectedMethod == "peak")
         result[i] <- max(data[spots[i]:(spots[i] + ww-1)])
       
-      if (selectedMethod=="mavfd")
+      # Estima a média do valor absoluto da primeira diferença
+      if (selectedMethod == "mavfd")
         result[i] <- sum(abs(diff(data[spots[i]:(spots[i] + ww-1)]) ))/(ww-1)
       
-      if (selectedMethod=="mavfdn"){
-        
-        dd<-data[spots[i]:(spots[i] + ww-1)]
-        dd<- (dd-mean(dd))/std(dd)
-        result[i] <- sum(abs(diff(dd)))/(ww-1)
-        
+      # Estima a média do valor absoluto da primeira diferença do sinal normalizado
+      if (selectedMethod == "mavfdn") {
+        dd <- data[spots[i]:(spots[i] + ww-1)]
+        dd <- (dd-mean(dd)) / std(dd)
+        result[i] <- sum(abs(diff(dd))) / (ww-1)
       }
       
-      if (selectedMethod=="mavsd")
-        result[i] <- sum(abs(diff(data[spots[i]:(spots[i] + ww-1)],lag = 2) ))/(ww-2)
+      # Estima a média do valor absoluto da segunda diferença 
+      if (selectedMethod == "mavsd")
+        result[i] <- sum(abs(diff(data[spots[i]:(spots[i] + ww-1)], lag = 2) )) / (ww-2)
       
-      if (selectedMethod=="mavsdn"){
-      
-        dd<-data[spots[i]:(spots[i] + ww-1)]
-        dd<- (dd-mean(dd))/std(dd)
-        result[i] <- sum(abs(diff(dd,lag = 2)))/(ww-2)
+      # Estima a média do valor absoluto da segunda diferença do sinal normalizado
+      if (selectedMethod == "mavsdn") {
+        dd <- data[spots[i]:(spots[i] + ww-1)]
+        dd <- (dd - mean(dd)) / std(dd)
+        result[i] <- sum(abs(diff(dd,lag = 2))) / (ww-2)
       }
-        
-      
+
     }
     
     return(result)
   }
   
   X <- data.matrix(df)
-  dx <- apply(X[,c(2:39)], 2, slideFunct, ww = w, ss = s)
-
-  dt <- df$X.Time.[2]-df$X.Time.[1]
+  dx <- apply(X[,c(startColRange:endColRange)], 2, slideFunct, ww = w, ss = s)
   
+  dt <- df$X.Time.[2] - df$X.Time.[1]
   
-  tt <- dt* (seq(from = 1, to = (length(df$X.Time.) - w), by = s) + w/2)
-  
+  tt <- dt * (seq(from = 1, to = (length(df$X.Time.) - w), by = s) + w/2)
   
   PulseA <- approx(df$X.Time., df$X.PULSE.A., xout = tt, method = "linear")
   PulseB <- approx(df$X.Time., df$X.PULSE.B., xout = tt, method = "linear")
@@ -427,17 +413,15 @@ featExtractFromTremenDataSet <- function(df,w,s, method="rms") {
   ss <- cbind(ss,data.frame(X.PULSE.A.= PulseA$y))
   ss <- cbind(ss,data.frame(X.PULSE.B.= PulseB$y))
   
-  
-  # incluindo coluna que combina a resposta binÃƒÂ¡ria dos pulsos A e B
+  # incluindo coluna que combina a resposta binária dos pulsos A e B
   pp <- combinePulseAB(ss$X.PULSE.A., ss$X.PULSE.B.)
   ss <- cbind(ss,data.frame(X.PULSE = pp))
   
   return(ss)
-  
 }
 
 # getStatisticsFromWindowedTremenDataSet ---------------------------------------------------------
-#             Estimate statistics from a set of features
+#       Estimate statistics from a set of features
 # Input: 
 #       df: dataframe resulting from LoadTREMSENFile
 #       f: statistic
@@ -449,41 +433,41 @@ featExtractFromTremenDataSet <- function(df,w,s, method="rms") {
 #
 #       medianRMS <- getStatisticsFromWindowedTremenDataSet(df.featTremsenData, f=median)
 
-getStatisticsFromWindowedTremenDataSet <- function(df, f = median){
+getStatisticsFromWindowedTremenDataSet <- function(df, f = median, startColRange=2, endColRange=39) {
   
   X <- df
   
   xx <- X$X.PULSE
   
-  if(xx[1]==1) xx[1] <- 0 #condicao em que o pulso comeÃƒÂ§a em nÃƒ???vel alto
-  
+  # condicao em que o pulso começa em nível alto
+  if (xx[1] == 1) 
+    xx[1] <- 0 
   
   ss <- abs(diff(xx))
-  Nwindows <- sum(ss==1)/2 
+  Nwindows <- sum(ss == 1)/2 
   
-  boundwnd <- which(ss==1)
+  boundwnd <- which(ss == 1)
   boundwnd[seq(1,length(boundwnd),2)] <- boundwnd[seq(1,length(boundwnd),2)] + 1
   
   result <- vector()
   
   windx <- 1
   
-  for(n in seq(1,length(boundwnd),2)){
-    
+  for (n in seq(1,length(boundwnd),2)) 
+  {
     indxo <- boundwnd[n]
     indxf <- boundwnd[n+1]
-    name <- paste('window:',windx,sep='')
+    name <- paste('window:', windx, sep='')
     windx <- windx + 1
-    tmp <- list (apply(X[indxo:indxf,], 2, FUN=f))
+    tmp <- list (apply(X[indxo:indxf,startColRange:endColRange], 2, FUN=f))
     result[[name]] <- tmp
   }
   
   return(result)
 }
 
-
 # resampleTremsenData ---------------------------------------------------------
-#             resample data set
+#       resample data set
 # Input: 
 #       df: dataframe resulting from LoadTREMSENFile
 #       fs: new sampling frequency in Hz
@@ -495,7 +479,7 @@ getStatisticsFromWindowedTremenDataSet <- function(df, f = median){
 #
 #       df.resampled <- resampleTremsenData(df.nonlineardetrended,200)
 
-resampleTremsenData <- function(df,fs) {
+resampleTremsenData <- function(df, fs) {
   
   reseampleData <- function(y,t,xx) {
     yp <- spline(t, y, xout = xx, method = "fmm")
@@ -521,7 +505,7 @@ resampleTremsenData <- function(df,fs) {
   ss <- cbind(data.frame(X.Time.= tnew), res)
   ss <- cbind(ss, res1)
   
-  # incluindo coluna que combina a resposta binÃƒÂ¡ria dos pulsos A e B
+  # incluindo coluna que combina a resposta binária dos pulsos A e B
   pp <- combinePulseAB(ss$X.PULSE.A., ss$X.PULSE.B.)
   ss <- cbind(ss,data.frame(X.PULSE = pp))
   
@@ -544,8 +528,7 @@ resampleTremsenData <- function(df,fs) {
 #  print(g1)
 
 
-plotPSTremsenDataSet <-function(pp, printplot = TRUE)
-{
+plotPSTremsenDataSet <- function(pp, printplot = TRUE) {
   
   # Lookup table for changing the label of the graphs:
   lookupTable <- c(
@@ -594,14 +577,15 @@ plotPSTremsenDataSet <-function(pp, printplot = TRUE)
     X.EMG2. = "EMG2"
     
   )
-  
+
   #pp should be estimated with psdTremsenData
   dat <- melt(pp, id = c("freq","spec"))
   facs <- factor(dat$L1)
   
-  c1<-c("X.G1.X.","X.G1.Y.","X.G1.Z.","X.G2.X.","X.G2.Y.","X.G2.Z.")
-  c2<-c("X.A1.X.","X.A1.Y.","X.A1.Z.","X.A2.X.","X.A2.Y.","X.A2.Z.")
-  c3<-c("X.M1.X.","X.M1.Y.","X.M1.Z.","X.M2.X.","X.M2.Y.","X.M2.Z.")
+  c1 <- c("X.G1.X.","X.G1.Y.","X.G1.Z.","X.G2.X.","X.G2.Y.","X.G2.Z.")
+  c2 <- c("X.A1.X.","X.A1.Y.","X.A1.Z.","X.A2.X.","X.A2.Y.","X.A2.Z.")
+  c3 <- c("X.M1.X.","X.M1.Y.","X.M1.Z.","X.M2.X.","X.M2.Y.","X.M2.Z.")
+  
   g <- ggplot() 
   g <- g + geom_line(data=dat[which(facs == c1),], alpha = 0.8, aes(x = freq, y = spec , group=L1), size=1)
 
@@ -617,20 +601,18 @@ plotPSTremsenDataSet <-function(pp, printplot = TRUE)
   g <- g + geom_vline(xintercept = c(2, 5, 10, 15), colour = "red")
   
   g <- g + xlab("frequency (Hz)") + ylab("energy")
-
+  
   g <- g + theme_bw(12)
   
-  
-  
-  if(printplot == TRUE)  print(g)
-  
+  if(printplot == TRUE) 
+    print(g)
   
   return(list(g))
   
 }
 
 # plotTremsenDataset ---------------------------------------------------------
-#             plot time-series in the data set
+#       plot time-series in the data set
 # Input: 
 #       dflist: list of dataframes to be plotted
 #       indxs: index of signals to be plotted from the data set
@@ -646,7 +628,7 @@ plotPSTremsenDataSet <-function(pp, printplot = TRUE)
 # gg3 <- plotTremsenDataset(list(df.nonlineardetrended,df.resampled ),indxs=c(5,6),printplot=FALSE, droplvs = c("X.PULSE.A.","X.PULSE.B."), alphavec = c(1, 0.3))
 # grid.arrange(gg1[[1]], gg2[[1]], gg3[[1]], nrow = 1, ncol=3, top = "Data set")
 
-plotTremsenDataset <- function(dflist, indxs = c(1:13), printplot = TRUE, droplvs = "", alphavec = NULL){
+plotTremsenDataset <- function(dflist, indxs = c(1:13), printplot = TRUE, droplvs = "", alphavec = NULL) {
   
   c1 <- c("X.Time.","X.G1.X.","X.G1.Y.","X.G1.Z.", "X.PULSE","X.PULSE.A.","X.PULSE.B.")
   c2 <- c("X.Time.","X.G2.X.","X.G2.Y.","X.G2.Z.", "X.PULSE","X.PULSE.A.","X.PULSE.B.")
@@ -666,35 +648,29 @@ plotTremsenDataset <- function(dflist, indxs = c(1:13), printplot = TRUE, droplv
   
   hh <- list(c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13)
   
-  hh <- list.subset(hh,indxs) #seleciona um subconjunto
+  #seleciona um subconjunto
+  hh <- list.subset(hh,indxs)
   
   heads <- levels(factor(unlist(hh)))
   
+  heads <- levels(droplevels(factor(unlist(hh)), droplvs))
   
-  heads <- levels(droplevels(factor(unlist(hh)),droplvs))
-  
-  
-  
-  if(isempty(alphavec) || length(dflist)!=length(alphavec)){
-
+  if (isempty(alphavec) || length(dflist)!=length(alphavec)){
     aa <- rep(0.7,length(dflist)) #alpha
-  }
-  else {
-    
+  }else{
     aa <- alphavec
   }
   
   g <- ggplot() 
   for(indx in 1:length(dflist)){
-    g <- g + geom_line(data = melt(dflist[[indx]][heads], id = "X.Time.") , 
-                       aes(x = X.Time., y = value), alpha = aa[indx], color = indx)
+    g <- g + geom_line(data = melt(dflist[[indx]][heads], id = "X.Time."), 
+                       aes(x = X.Time., y = value), alpha = aa[indx], 
+                       color = indx)
     
     g <- g + labs(y = "")
     g <- g + labs(x = "time (s)")
     
   }
-  
-  
   
   # Lookup table for changing the label of the graphs:
   lookupTable <- c(
@@ -744,22 +720,21 @@ plotTremsenDataset <- function(dflist, indxs = c(1:13), printplot = TRUE, droplv
     
   )
   
-  
-  
-  g <- g + facet_grid(variable ~ ., scales = "free_y", labeller = labeller(variable=lookupTable))
-  #g <- g + labs(title = "KK")
+  g <- g + facet_grid(variable ~ ., scales = "free_y", labeller = labeller(variable = lookupTable))
+
   g <- g + theme_bw(18)
   #g+theme(axis.text=element_text(size=18), axis.title=element_text(size=18,face="bold"))
-  if(printplot == TRUE) print(g)
+  if (printplot == TRUE) 
+    print(g)
   
   return(list(g))
 }
 
 
-# Multiple plot function
+# Multiple plot function ---------------------------------------------------------
 #
 # ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
-# - cols:   Number of columns in layout
+# - cols: Number of columns in layout
 # - layout: A matrix specifying the layout. If present, 'cols' is ignored.
 #
 # If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
@@ -802,9 +777,7 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
   }
 }
 
-
-
-#' plotMultiPanelData
+#' plotMultiPanelData ---------------------------------------------------------
 #'
 #' @param df1 -> data frame
 #'

@@ -1,6 +1,6 @@
 # FeatExtract  -------------------------------------------------------------------
-# Version: 1.0
-# Date: Feb 09, 2019
+# Version: 1.1
+# Date: March 09, 2019
 # Latest version available @ 
 
 # Author: Prof. Adriano de Oliveira Andrade
@@ -21,12 +21,16 @@
 
 
 # Required libraries ------------------------------------------------------
-source("TremsenToolbox.r") #tremsen toolbox
+source("TREMSENToolbox.r") #tremsen toolbox
 
 
 # Set of functions for feature extraction ---------------------------------
 
-buildDataSet <-function(filename, processData = FALSE){
+buildDataSet <-function(filename, 
+                        processData = FALSE,
+                        fb = list(b1=c(0, 2.5), b2 = c(2.5, 5.0), b3= c(5.0, 10.0), b4 = c(10, 15)),   #frequency band (Hz)
+                        logScaleEnergy = FALSE #if true log10 is applied to the estimated energy
+                        ){
   
   f <- basename(filename)
   
@@ -65,8 +69,30 @@ buildDataSet <-function(filename, processData = FALSE){
     #Detrend TREMSEN dataset (nonlinear detrending)
     df.nonlineardetrended <- nonLineardetrendTremsenData(df)
     
+    #Estimate of resultant components of each sensor
+    attach(df.nonlineardetrended)
+    X.G1.RES. <- sqrt(X.G1.X.^2 + X.G1.Y.^2 + X.G1.Z.^2)
+    X.G2.RES. <- sqrt(X.G2.X.^2 + X.G2.Y.^2 + X.G2.Z.^2)
+    
+    X.A1.RES. <- sqrt(X.A1.X.^2 + X.A1.Y.^2 + X.A1.Z.^2)
+    X.A2.RES. <- sqrt(X.A2.X.^2 + X.A2.Y.^2 + X.A2.Z.^2)
+    
+    X.M1.RES. <- sqrt(X.M1.X.^2 + X.M1.Y.^2 + X.M1.Z.^2)
+    X.M2.RES. <- sqrt(X.M2.X.^2 + X.M2.Y.^2 + X.M2.Z.^2)
+    
+    df.nonlineardetrended <- add_column(df.nonlineardetrended, X.G1.RES., .before = "X.G1.X.")
+    df.nonlineardetrended <- add_column(df.nonlineardetrended, X.G2.RES., .before = "X.G2.X.")
+    
+    df.nonlineardetrended <- add_column(df.nonlineardetrended, X.A1.RES., .before = "X.A1.X.")
+    df.nonlineardetrended <- add_column(df.nonlineardetrended, X.A2.RES., .before = "X.A2.X.")
+    
+    df.nonlineardetrended <- add_column(df.nonlineardetrended, X.M1.RES., .before = "X.M1.X.")
+    df.nonlineardetrended <- add_column(df.nonlineardetrended, X.M2.RES., .before = "X.M2.X.")
+    
+    detach(df.nonlineardetrended)
+    
     #Estimate the power spectrum of a TREMSEN dataset
-    pp <- psdTremsenData(df.nonlineardetrended) ## It is a good practice to remove trends prior to use this function
+    pp <- psdTremsenData(df.nonlineardetrended, startColRange=2, endColRange=45) ## It is a good practice to remove trends prior to use this function
     headStr <- names(pp[[1]])
     
     #Get the number of signal windows
@@ -86,8 +112,12 @@ buildDataSet <-function(filename, processData = FALSE){
     
     
     #median of the RMS
-    df.featTremsenData <- featExtractFromTremenDataSet(df.nonlineardetrended,w=50,s=10, method = "rms")
-    medianRMS <- getStatisticsFromWindowedTremenDataSet(df.featTremsenData, f=median)
+    df.featTremsenData <- featExtractFromTremenDataSet(df.nonlineardetrended,w=50,s=10, 
+                                                       method = "rms",
+                                                       startColRange=2, endColRange=45)
+    
+    medianRMS <- getStatisticsFromWindowedTremenDataSet(df.featTremsenData, f=median,
+                                                        startColRange=2, endColRange=45)
     
     for(i in seq(1,length(headStr))){
       for(j in 1:Nwindows){
@@ -95,21 +125,39 @@ buildDataSet <-function(filename, processData = FALSE){
         #myls[[i]][wndLabels[j]]<- pp[[j]]
         
         #Select disctinct frequency bands
-        indxf1 <- which(pp[[j]][[i]]$freq < 2.5)
-        indxf2 <- which(pp[[j]][[i]]$freq >= 2.5 & pp[[j]][[i]]$freq < 5.0)
-        indxf3 <- which(pp[[j]][[i]]$freq >= 5.0 & pp[[j]][[i]]$freq <= 10)
-        indxf4 <- which(pp[[j]][[i]]$freq > 10 & pp[[j]][[i]]$freq <=15)
+        indxf1 <- which(pp[[j]][[i]]$freq >= fb$b1[1] & pp[[j]][[i]]$freq < fb$b1[2])
+        indxf2 <- which(pp[[j]][[i]]$freq >= fb$b2[1] & pp[[j]][[i]]$freq < fb$b2[2])
+        indxf3 <- which(pp[[j]][[i]]$freq >= fb$b3[1] & pp[[j]][[i]]$freq < fb$b3[2])
+        indxf4 <- which(pp[[j]][[i]]$freq >= fb$b4[1] & pp[[j]][[i]]$freq < fb$b4[2])
         
-        wE1 <- weighted.mean(pp[[j]][[i]]$spec[indxf1],pp[[j]][[i]]$freq[indxf1])
-        wE2 <- weighted.mean(pp[[j]][[i]]$spec[indxf2],pp[[j]][[i]]$freq[indxf2])
-        wE3 <- weighted.mean(pp[[j]][[i]]$spec[indxf3],pp[[j]][[i]]$freq[indxf3])
-        wE4 <- weighted.mean(pp[[j]][[i]]$spec[indxf4],pp[[j]][[i]]$freq[indxf4])
+        if(logScaleEnergy == FALSE)
+        {
+          
+          wE1 <- weighted.mean(pp[[j]][[i]]$spec[indxf1],pp[[j]][[i]]$freq[indxf1])
+          wE2 <- weighted.mean(pp[[j]][[i]]$spec[indxf2],pp[[j]][[i]]$freq[indxf2])
+          wE3 <- weighted.mean(pp[[j]][[i]]$spec[indxf3],pp[[j]][[i]]$freq[indxf3])
+          wE4 <- weighted.mean(pp[[j]][[i]]$spec[indxf4],pp[[j]][[i]]$freq[indxf4])
+
+          wF1 <- weighted.mean(pp[[j]][[i]]$freq[indxf1],pp[[j]][[i]]$spec[indxf1])
+          wF2 <- weighted.mean(pp[[j]][[i]]$freq[indxf2],pp[[j]][[i]]$spec[indxf2])
+          wF3 <- weighted.mean(pp[[j]][[i]]$freq[indxf3],pp[[j]][[i]]$spec[indxf3])
+          wF4 <- weighted.mean(pp[[j]][[i]]$freq[indxf4],pp[[j]][[i]]$spec[indxf4])
+          
+        } else{
+          
+          wE1 <- weighted.mean(log10 (pp[[j]][[i]]$spec[indxf1]),pp[[j]][[i]]$freq[indxf1])
+          wE2 <- weighted.mean(log10 (pp[[j]][[i]]$spec[indxf2]),pp[[j]][[i]]$freq[indxf2])
+          wE3 <- weighted.mean(log10 (pp[[j]][[i]]$spec[indxf3]),pp[[j]][[i]]$freq[indxf3])
+          wE4 <- weighted.mean(log10 (pp[[j]][[i]]$spec[indxf4]),pp[[j]][[i]]$freq[indxf4])
+          
+          wF1 <- weighted.mean(pp[[j]][[i]]$freq[indxf1],log10 (pp[[j]][[i]]$spec[indxf1]))
+          wF2 <- weighted.mean(pp[[j]][[i]]$freq[indxf2],log10 (pp[[j]][[i]]$spec[indxf2]))
+          wF3 <- weighted.mean(pp[[j]][[i]]$freq[indxf3],log10 (pp[[j]][[i]]$spec[indxf3]))
+          wF4 <- weighted.mean(pp[[j]][[i]]$freq[indxf4],log10 (pp[[j]][[i]]$spec[indxf4]))
+
+        }
         
-        wF1 <- weighted.mean(pp[[j]][[i]]$freq[indxf1],pp[[j]][[i]]$spec[indxf1])
-        wF2 <- weighted.mean(pp[[j]][[i]]$freq[indxf2],pp[[j]][[i]]$spec[indxf2])
-        wF3 <- weighted.mean(pp[[j]][[i]]$freq[indxf3],pp[[j]][[i]]$spec[indxf3])
-        wF4 <- weighted.mean(pp[[j]][[i]]$freq[indxf4],pp[[j]][[i]]$spec[indxf4])
-        
+
         myls[[i]][[wndLabels[j]]]$'wE1'<- wE1
         myls[[i]][[wndLabels[j]]]$'wE2'<- wE2
         myls[[i]][[wndLabels[j]]]$'wE3'<- wE3
